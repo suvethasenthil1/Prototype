@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Farming Platform</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body.dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            transition: background-color 0.3s;
+        }
+        body.dark-mode .container {
+            background-color: #1e1e1e;
+            box-shadow: 0 0 10px rgba(255,255,255,0.1);
+        }
+        h1 {
+            color: #2e7d32;
+            text-align: center;
+            transition: color 0.3s;
+        }
+        body.dark-mode h1 {
+            color: #4caf50;
+        }
+        .upload-form {
+            margin-top: 30px;
+        }
+        .upload-form input[type="file"] {
+            display: block;
+            margin: 10px 0;
+        }
+        .upload-form button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .upload-form button:hover {
+            background-color: #45a049;
+        }
+        .features {
+            margin-top: 40px;
+        }
+        .features h2 {
+            color: #2e7d32;
+            transition: color 0.3s;
+        }
+        body.dark-mode .features h2 {
+            color: #4caf50;
+        }
+        .features ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .features li {
+            padding: 5px 0;
+        }
+        #imagePreview {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Farming Platform</h1>
+        <p>Welcome to our AI-driven smart farming platform. Upload a crop image to detect diseases and get sustainable treatment recommendations.</p>
+
+        <nav style="text-align: center; margin-bottom: 30px;">
+            <a href="/" style="margin: 0 15px; text-decoration: none; color: #2e7d32; font-weight: bold;">Home</a>
+            <a href="/about" style="margin: 0 15px; text-decoration: none; color: #2e7d32; font-weight: bold;">About</a>
+            <a href="/contact" style="margin: 0 15px; text-decoration: none; color: #2e7d32; font-weight: bold;">Contact</a>
+            <button id="darkModeToggle" style="margin: 0 15px; background: none; border: none; color: #2e7d32; font-weight: bold; cursor: pointer;">🌙 Dark Mode</button>
+        </nav>
+
+        <div class="upload-form">
+            <h2>Upload Crop Image</h2>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" name="image" accept="image/*" required id="imageInput">
+                <img id="imagePreview" alt="Image Preview">
+                <button type="submit">Detect Disease</button>
+            </form>
+        </div>
+
+        <div class="features">
+            <h2>Features</h2>
+            <ul>
+                <li>AI-based image analysis for crop disease detection</li>
+                <li>Eco-friendly treatment recommendations</li>
+                <li>Climate-conscious preventive guidance</li>
+                <li>Real-time weather data integration</li>
+            </ul>
+            <p><a href="/about">Learn more about our platform</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('http://localhost:5000/detect', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    window.location.href = `/results?disease=${encodeURIComponent(data.disease)}&recommendations=${encodeURIComponent(data.recommendations)}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during detection.');
+            });
+        });
+
+        // Dark Mode Toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            body.classList.add('dark-mode');
+            darkModeToggle.textContent = '☀️ Light Mode';
+        }
+
+        darkModeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const theme = body.classList.contains('dark-mode') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+            darkModeToggle.textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+        });
+
+        // Image Preview
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.style.display = 'none';
+            }
+        });
+
+        // Load Weather Data
+        fetch('http://localhost:5000/climate')
+            .then(response => response.json())
+            .then(data => {
+                const weatherDiv = document.createElement('div');
+                weatherDiv.style.marginTop = '20px';
+                weatherDiv.style.padding = '10px';
+                weatherDiv.style.backgroundColor = '#e8f5e8';
+                weatherDiv.style.borderRadius = '5px';
+                weatherDiv.innerHTML = `
+                    <h3>Current Weather</h3>
+                    <p>Temperature: ${data.temperature}°C</p>
+                    <p>Humidity: ${data.humidity}%</p>
+                    <p>Rainfall: ${data.rainfall}mm</p>
+                `;
+                document.querySelector('.container').appendChild(weatherDiv);
+            })
+            .catch(error => console.error('Error loading weather:', error));
+    </script>
+</body>
+</html>
